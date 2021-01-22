@@ -1,0 +1,29 @@
+version: '3.1'
+
+services:
+  listd_tests:
+    build:
+      context: ./tests/
+      dockerfile: Dockerfile
+    volumes:
+      - $PWD:/mnt/e/Project/gomod/docker_compose_test
+    environment:
+      - GOPROXY=https://goproxy.cn
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: 123
+    volumes:
+      - ./sql/file:/opt/sql:rw
+      - ./sql/init:/docker-entrypoint-initdb.d/:rw
+      - ./sql_conf:/etc/mysql/mysql.conf.d
+    restart: on-failure
+    healthcheck:
+      test: "/usr/bin/mysql --user=root --password=123 --execute \"SHOW DATABASES;\""
+      interval: 2s
+      timeout: 30s
+      retries: 15
+    command: --skip-name-resolve --default-authentication-plugin=mysql_native_password
